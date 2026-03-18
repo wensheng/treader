@@ -8,6 +8,7 @@ It runs in a terminal that supports the Kitty graphics protocol:
 - [Ghostty](https://ghostty.org/)
 - [Kitty](https://sw.kovidgoyal.net/kitty/)
 - [WezTerm](https://wezterm.net/)
+- [cmux](https://github.com/manaflow-ai/cmux)
 
 ## Installation
 
@@ -67,10 +68,15 @@ treader -b '#1a1a2e' -w '#e0e0e0' book.epub
 
 | Key | Action |
 |-----|--------|
-| `j`, `Down`, `Space` | Scroll down / next page at boundary |
+| `Space` | Next page |
+| `PageDown` | Next page (or move down by one viewport in zoom mode) |
+| `PageUp` | Previous page (or move up by one viewport in zoom mode) |
+| `j`, `Down` | Scroll down / next page at boundary |
 | `k`, `Up` | Scroll up / previous page at boundary |
-| `l`, `Right` | Next page (or pan right in zoom mode) |
-| `h`, `Left` | Previous page (or pan left in zoom mode) |
+| `Right` | Next page |
+| `Left` | Previous page |
+| `l` | Next page (or pan right in zoom mode) |
+| `h` | Previous page (or pan left in zoom mode) |
 | `g` + number + `Enter` | Go to page |
 | `t` | Table of contents |
 | `/` + text + `Enter` | Search |
@@ -95,7 +101,7 @@ treader -b '#1a1a2e' -w '#e0e0e0' book.epub
 | `z` | Toggle zoom mode |
 | `o` | Zoom in (1.2x per step) |
 | `O` | Zoom out |
-| `Left` / `Right` | Pan horizontally (in zoom mode) |
+| `h` / `l` | Pan horizontally (in zoom mode) |
 | `Up` / `Down` | Scroll vertically (in zoom mode) |
 
 Zoom re-renders pages at higher resolution through MuPDF, so text stays
