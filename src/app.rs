@@ -364,6 +364,23 @@ impl App {
         }
     }
 
+    /// A viewport-sized vertical step with a one-line overlap.
+    pub fn viewport_page_scroll_step(ws: &WindowSize) -> u32 {
+        (ws.page_area_height_px() as u32)
+            .saturating_sub(u32::from(ws.cell_height_px))
+            .max(1)
+    }
+
+    /// Move down by one viewport in zoom mode, keeping one line of overlap.
+    pub fn page_down_in_zoom(&mut self, ws: &WindowSize) -> ScrollAction {
+        self.scroll_down(ws, Self::viewport_page_scroll_step(ws))
+    }
+
+    /// Move up by one viewport in zoom mode, keeping one line of overlap.
+    pub fn page_up_in_zoom(&mut self, ws: &WindowSize) -> ScrollAction {
+        self.scroll_up(ws, Self::viewport_page_scroll_step(ws))
+    }
+
     // --- Zoom ---
 
     pub fn toggle_zoom_mode(&mut self) {
@@ -855,6 +872,48 @@ mod tests {
         let action = app.scroll_down(&ws, 100);
         assert!(matches!(action, ScrollAction::Scrolled));
         assert_eq!(app.scroll_offset, 520); // clamped to max
+    }
+
+    #[test]
+    fn viewport_page_scroll_step_keeps_one_line_overlap() {
+        let ws = test_ws();
+        assert_eq!(App::viewport_page_scroll_step(&ws), 460);
+    }
+
+    #[test]
+    fn page_down_in_zoom_scrolls_by_viewport_minus_one_line() {
+        let ws = test_ws();
+        let mut app = app_with_pages(3, 0, 800, 1400);
+        let action = app.page_down_in_zoom(&ws);
+        assert!(matches!(action, ScrollAction::Scrolled));
+        assert_eq!(app.scroll_offset, 460);
+    }
+
+    #[test]
+    fn page_down_in_zoom_at_bottom_turns_next() {
+        let ws = test_ws();
+        let mut app = app_with_pages(3, 0, 800, 1000);
+        app.scroll_offset = app.max_scroll(&ws);
+        let action = app.page_down_in_zoom(&ws);
+        assert!(matches!(action, ScrollAction::TurnNext));
+    }
+
+    #[test]
+    fn page_up_in_zoom_scrolls_by_viewport_minus_one_line() {
+        let ws = test_ws();
+        let mut app = app_with_pages(3, 1, 800, 1400);
+        app.scroll_offset = 900;
+        let action = app.page_up_in_zoom(&ws);
+        assert!(matches!(action, ScrollAction::Scrolled));
+        assert_eq!(app.scroll_offset, 440);
+    }
+
+    #[test]
+    fn page_up_in_zoom_at_top_turns_prev() {
+        let ws = test_ws();
+        let mut app = app_with_pages(3, 1, 800, 1000);
+        let action = app.page_up_in_zoom(&ws);
+        assert!(matches!(action, ScrollAction::TurnPrev));
     }
 
     #[test]

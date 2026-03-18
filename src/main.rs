@@ -73,6 +73,32 @@ fn render_height_px(app: &App, ws: &WindowSize) -> f32 {
 
 const LOADING_INDICATOR_DELAY: Duration = Duration::from_millis(90);
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum HorizontalAction {
+    NextPage,
+    PrevPage,
+    PanRight,
+    PanLeft,
+}
+
+fn horizontal_action(key: KeyCode, zoom_mode: bool) -> Option<HorizontalAction> {
+    match key {
+        KeyCode::Right => Some(HorizontalAction::NextPage),
+        KeyCode::Left => Some(HorizontalAction::PrevPage),
+        KeyCode::Char('l') => Some(if zoom_mode {
+            HorizontalAction::PanRight
+        } else {
+            HorizontalAction::NextPage
+        }),
+        KeyCode::Char('h') => Some(if zoom_mode {
+            HorizontalAction::PanLeft
+        } else {
+            HorizontalAction::PrevPage
+        }),
+        _ => None,
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
@@ -857,20 +883,27 @@ async fn handle_event(
         KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             return Ok(EventOutcome::Quit);
         }
-
-        // --- Page navigation / horizontal pan in zoom mode ---
-        KeyCode::Right | KeyCode::Char('l') => {
-            if app.zoom_mode {
-                app.pan_right(ws, pan_step);
-            } else if app.next_page() {
+        KeyCode::Char(' ') => {
+            if app.next_page() {
                 send_page_jump_commands(app, to_renderer, to_converter)?;
             }
         }
-        KeyCode::Left | KeyCode::Char('h') => {
-            if app.zoom_mode {
-                app.pan_left(ws, pan_step);
-            } else if app.prev_page() {
-                send_page_jump_commands(app, to_renderer, to_converter)?;
+
+        // --- Horizontal navigation ---
+        KeyCode::Right | KeyCode::Left | KeyCode::Char('h') | KeyCode::Char('l') => {
+            match horizontal_action(key.code, app.zoom_mode).unwrap() {
+                HorizontalAction::NextPage => {
+                    if app.next_page() {
+                        send_page_jump_commands(app, to_renderer, to_converter)?;
+                    }
+                }
+                HorizontalAction::PrevPage => {
+                    if app.prev_page() {
+                        send_page_jump_commands(app, to_renderer, to_converter)?;
+                    }
+                }
+                HorizontalAction::PanRight => app.pan_right(ws, pan_step),
+                HorizontalAction::PanLeft => app.pan_left(ws, pan_step),
             }
         }
 
@@ -882,6 +915,35 @@ async fn handle_event(
         }
         KeyCode::Char('k') => {
             if app.prev_page() {
+                send_page_jump_commands(app, to_renderer, to_converter)?;
+            }
+        }
+
+        KeyCode::PageDown => {
+            if app.zoom_mode {
+                match app.page_down_in_zoom(ws) {
+                    ScrollAction::TurnNext => {
+                        if app.next_page() {
+                            send_page_jump_commands(app, to_renderer, to_converter)?;
+                        }
+                    }
+                    ScrollAction::Scrolled | ScrollAction::Nothing | ScrollAction::TurnPrev => {}
+                }
+            } else if app.next_page() {
+                send_page_jump_commands(app, to_renderer, to_converter)?;
+            }
+        }
+        KeyCode::PageUp => {
+            if app.zoom_mode {
+                match app.page_up_in_zoom(ws) {
+                    ScrollAction::TurnPrev => {
+                        if app.prev_page_at_bottom(ws) {
+                            send_page_jump_commands(app, to_renderer, to_converter)?;
+                        }
+                    }
+                    ScrollAction::Scrolled | ScrollAction::Nothing | ScrollAction::TurnNext => {}
+                }
+            } else if app.prev_page() {
                 send_page_jump_commands(app, to_renderer, to_converter)?;
             }
         }
@@ -1052,7 +1114,7 @@ async fn handle_event(
         // Help
         KeyCode::Char('?') => {
             app.show_info(
-                "←/→ page  ↑/↓ scroll  j/k page  g goto  t toc  / search  n/N result  z zoom  o/O +/-  i invert  r rotate  c crop  d tint  M meta  f links  q quit".to_owned(),
+                "Space next  PgUp/PgDn page  ←/→ page  ↑/↓ scroll  j/k page  g goto  t toc  / search  n/N result  z zoom  o/O +/-  i invert  r rotate  c crop  d tint  M meta  f links  q quit".to_owned(),
             );
         }
 
@@ -1461,7 +1523,10 @@ OPTIONS:
         --version             Print version and exit
 
 KEYBOARD:
-    Left/Right, h/l          Turn page
+    Left/Right               Turn page
+    Space                    Next page
+    PageUp/PageDown          Previous/next page (viewport jump in zoom mode)
+    h/l                      Turn page (pan horizontally in zoom mode)
     Up/Down                  Scroll within page (auto-turns at boundary)
     j/k                      Next/previous page (bypass scroll)
     g + number + Enter       Go to page
@@ -1578,5 +1643,29 @@ mod tests {
     fn parse_color_rgb_func() {
         let c = parse_color("rgb(128, 64, 32)").unwrap();
         assert_eq!(c, i32::from_be_bytes([0, 128, 64, 32]));
+    }
+
+    #[test]
+    fn horizontal_action_keeps_arrow_keys_as_page_turns_in_zoom_mode() {
+        assert_eq!(
+            horizontal_action(KeyCode::Right, true),
+            Some(HorizontalAction::NextPage)
+        );
+        assert_eq!(
+            horizontal_action(KeyCode::Left, true),
+            Some(HorizontalAction::PrevPage)
+        );
+    }
+
+    #[test]
+    fn horizontal_action_uses_h_and_l_for_pan_in_zoom_mode() {
+        assert_eq!(
+            horizontal_action(KeyCode::Char('l'), true),
+            Some(HorizontalAction::PanRight)
+        );
+        assert_eq!(
+            horizontal_action(KeyCode::Char('h'), true),
+            Some(HorizontalAction::PanLeft)
+        );
     }
 }

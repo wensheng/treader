@@ -51,21 +51,29 @@ Named colours (e.g. `red`) are not supported.
 
 | Key | Action |
 |-----|--------|
-| `l`, `Right` | Next page |
-| `h`, `Left` | Previous page |
+| `Right` | Next page |
+| `Left` | Previous page |
+| `Space` | Next page |
+| `PageDown` | Next page (move down by one viewport in zoom mode) |
+| `PageUp` | Previous page (move up by one viewport in zoom mode) |
+| `l` | Next page (pan right in zoom mode) |
+| `h` | Previous page (pan left in zoom mode) |
 | `j` | Next page (always turns, ignores scroll position) |
 | `k` | Previous page (always turns, ignores scroll position) |
 | `g` then digits then `Enter` | Go to page number (1-indexed) |
 | `t` | Open table of contents |
 
-`j`/`k` always turn the page immediately. `Left`/`Right` also turn pages
-in normal mode, but pan horizontally when zoom mode is active.
+`Space` always turns to the next page. `Left`/`Right` always turn pages.
+`PageUp`/`PageDown` always turn pages outside zoom mode. In zoom mode they move
+by one viewport with a one-line overlap, and turn pages at the top/bottom.
+`j`/`k` always turn the page immediately. In zoom mode, `h`/`l` pan
+horizontally instead.
 
 ### Scrolling
 
 | Key | Action |
 |-----|--------|
-| `Down`, `Space` | Scroll down within page; turn to next page at bottom |
+| `Down` | Scroll down within page; turn to next page at bottom |
 | `Up` | Scroll up within page; turn to previous page at top |
 
 Each scroll step moves by 3 cell rows of pixels. When the page fits
@@ -85,7 +93,7 @@ taller than the visible area.
 | `z` | Toggle zoom mode on/off (**PDF only**) |
 | `o` | Zoom in (**PDF only**) |
 | `O` | Zoom out (**PDF only**) |
-| `Left`/`Right` | Pan horizontally (zoom mode only) |
+| `h`/`l` | Pan horizontally (zoom mode only) |
 | `Up`/`Down` | Scroll vertically (zoom mode only) |
 
 Zoom re-renders the page through MuPDF at higher resolution, so text and
