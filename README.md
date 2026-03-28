@@ -16,10 +16,12 @@ It runs in a terminal that supports the Kitty graphics protocol:
 cargo install treader
 ```
 
-If you are on macOS, you can install it using Homebrew:
+Or `brew install wensheng/treader/treader` if you are using macOS and homebrew.
+
+If you are on Linux, make sure `clang` and `libfontconfig` are installed.
 
 ```
-brew install wensheng/treader/treader
+sudo apt install clang libfontconfig1-dev
 ```
 
 ## Usage
