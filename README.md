@@ -1,3 +1,5 @@
+**This project was renamed to [kitpdf](https://github.com/wensheng/kitpdf)**
+
 # treader
 
 A terminal-based PDF and EPUB viewer that renders documents using the
